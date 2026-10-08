@@ -16,7 +16,7 @@ const store = { products: [], event: "", club: "", cash: {} };
 const salesByEvent = {};   // eventName -> [sales] (laufendes Spiel live, Archiv bei Bedarf geladen)
 const loading = new Set();
 const ui = { cart:{}, given:null, viewEvent:null, lastBooking:null, confirmDel:null, confirmReset:false, archConfirm:null, pending:0 };
-let FB = window.FB, app, auth, db, user = null, unsubs = [], unsubSales = null, currentListenEvent = null;
+let app, auth, db, user = null, unsubs = [], unsubSales = null, currentListenEvent = null;
 
 const curEvent = () => store.event || "Ohne Spielname";
 const cashOf = ev => store.cash[ev] || {start:null, counted:null};
@@ -31,7 +31,7 @@ function setupError(html){
   $("gateMsg").innerHTML = html;
   $("loginForm").querySelectorAll("input,button").forEach(el=>el.disabled=true);
 }
-if(!FB){
+if(!window.FB){
   setupError("<strong>Die Datei <code>firebase.bundle.js</code> fehlt oder wurde nicht geladen.</strong> Bitte prüfen, ob sie im GitHub-Repository liegt.");
 } else if(!window.FIREBASE_CONFIG){
   setupError("<strong>Die Datei <code>firebase-config.js</code> ist fehlerhaft oder fehlt.</strong> Oft ist beim Einfügen die erste Zeile kaputtgegangen. Sie muss mit <code>window.FIREBASE_CONFIG = {</code> beginnen.");
