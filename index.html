@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1E6A3B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kasse">
+<title>Vereinskasse</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+@font-face{font-family:"Barlow Condensed";font-weight:700;font-display:swap;src:url(fonts/barlow-condensed-latin-700-normal.woff2) format("woff2")}
+@font-face{font-family:"Barlow Condensed";font-weight:800;font-display:swap;src:url(fonts/barlow-condensed-latin-800-normal.woff2) format("woff2")}
+@font-face{font-family:"Barlow";font-weight:400;font-display:swap;src:url(fonts/barlow-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:"Barlow";font-weight:600;font-display:swap;src:url(fonts/barlow-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:"Barlow";font-weight:700;font-display:swap;src:url(fonts/barlow-latin-700-normal.woff2) format("woff2")}
+:root{
+  color-scheme:light;
+  --bg:#F3F5F0; --surface:#FFFFFF; --surface2:#E8ECE4; --line:#D3D9CD;
+  --text:#18221A; --muted:#5C6A5E;
+  --pitch:#1E6A3B; --pitch-ink:#FFFFFF; --pitch-soft:#DCEBDF;
+  --food:#F2B632; --food-ink:#2A1E00; --food-soft:#FCEFD0;
+  --drink:#2F6FB5; --drink-ink:#FFFFFF;
+  --other:#7A6A5A; --other-ink:#FFFFFF;
+  --danger:#B8352B; --danger-soft:#F7DEDB;
+  --shadow:0 1px 0 rgba(0,0,0,.06),0 2px 6px rgba(20,40,20,.06);
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
+  --sal:env(safe-area-inset-left,0px); --sar:env(safe-area-inset-right,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    color-scheme:dark;
+    --bg:#101712; --surface:#18221B; --surface2:#213025; --line:#2E3E32;
+    --text:#E8EEE8; --muted:#9AAA9D;
+    --pitch:#3FA066; --pitch-ink:#07130B; --pitch-soft:#1D3526;
+    --food-soft:#3A2F12;
+    --drink:#5C9BE0; --drink-ink:#07121F;
+    --other:#B09C88; --other-ink:#1A140E;
+    --danger:#E8675C; --danger-soft:#3A1D1A;
+    --shadow:0 1px 0 rgba(0,0,0,.3);
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--body);font-size:16px;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;overscroll-behavior-y:none}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;touch-action:manipulation}
+[hidden]{display:none!important}
+:focus-visible{outline:3px solid var(--pitch);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+
+.app{max-width:1200px;margin:0 auto;
+  padding-top:calc(var(--sat) + 12px);padding-bottom:calc(var(--sab) + 24px);
+  padding-left:calc(var(--sal) + 16px);padding-right:calc(var(--sar) + 16px);
+  display:flex;flex-direction:column;gap:14px;min-height:100%}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px}
+.brand{font-family:var(--display);font-weight:800;font-size:28px;line-height:1;display:flex;align-items:center;gap:8px}
+.brand .ball{width:22px;height:22px;border-radius:50%;background:var(--pitch);position:relative;flex:none}
+.brand .ball::after{content:"";position:absolute;inset:6px;border-radius:50%;border:2px solid var(--pitch-ink)}
+.event{display:flex;align-items:center;gap:8px;flex:1 1 240px;min-width:0}
+.event label,.lbl{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;white-space:nowrap}
+.evname{font-family:var(--display);font-weight:700;font-size:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
+.startcash{flex:0 1 230px}
+.startcash input{text-align:right;width:100px;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-weight:600}
+.startcash .eur{font-weight:600;color:var(--muted)}
+nav.tabs{display:flex;background:var(--surface2);border-radius:10px;padding:3px;gap:2px}
+nav.tabs button{border:0;background:transparent;padding:8px 14px;border-radius:8px;font-weight:600;color:var(--muted);flex:1}
+nav.tabs button[aria-selected="true"]{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+
+/* Kasse */
+.pos{display:grid;grid-template-columns:1fr 360px;gap:16px;align-items:start}
+.catlabel{font-family:var(--display);font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:4px 0 8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:14px}
+.prod{position:relative;border:0;border-radius:12px;min-height:96px;padding:12px;text-align:left;display:flex;flex-direction:column;justify-content:space-between;box-shadow:var(--shadow);transition:transform .06s ease;user-select:none;-webkit-user-select:none}
+.prod:active{transform:scale(.97)}
+.prod .n{font-family:var(--display);font-weight:700;font-size:23px;line-height:1.05}
+.prod .p{font-weight:600;font-size:15px;opacity:.9}
+.prod[data-cat="Essen"]{background:var(--food);color:var(--food-ink)}
+.prod[data-cat="Getränke"]{background:var(--drink);color:var(--drink-ink)}
+.prod[data-cat="Sonstiges"]{background:var(--other);color:var(--other-ink)}
+.prod .badge{position:absolute;top:8px;right:8px;min-width:28px;height:28px;padding:0 7px;border-radius:14px;background:var(--surface);color:var(--text);font-weight:700;display:grid;place-items:center;font-size:15px}
+
+.cart{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px;position:sticky;top:calc(var(--sat) + 12px)}
+.cart-head{display:flex;justify-content:space-between;align-items:center}
+.cart h2{margin:0;font-family:var(--display);font-size:20px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.toggle{display:none;border:1px solid var(--line);background:var(--surface2);border-radius:8px;padding:6px 10px;font-weight:600;font-size:14px}
+.details{display:flex;flex-direction:column;gap:12px;min-height:0}
+.lines{display:flex;flex-direction:column;gap:6px;max-height:34vh;overflow:auto}
+.line{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line)}
+.line .nm{font-weight:600}
+.line .sub{color:var(--muted);font-size:13px}
+.qty{display:flex;align-items:center;gap:4px}
+.qty button{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:var(--surface2);font-weight:700;font-size:18px;line-height:1}
+.qty span{min-width:22px;text-align:center;font-weight:700}
+.line .sum{font-weight:700;min-width:64px;text-align:right}
+.empty{color:var(--muted);font-size:14px;padding:10px 0}
+.given .row{display:flex;gap:6px;flex-wrap:wrap}
+.given button{flex:1 1 0;min-width:52px;padding:9px 0;border-radius:8px;border:1px solid var(--line);background:var(--surface2);font-weight:600}
+.given button[aria-pressed="true"]{background:var(--pitch-soft);border-color:var(--pitch)}
+.change{display:flex;justify-content:space-between;gap:8px;font-weight:600;padding:8px 10px;border-radius:8px;background:var(--pitch-soft);margin-top:6px}
+.change.short{background:var(--danger-soft);color:var(--danger)}
+.cart-foot{display:flex;flex-direction:column;gap:10px}
+.total{display:flex;justify-content:space-between;align-items:baseline;border-top:2px solid var(--text);padding-top:10px}
+.total .tl{font-family:var(--display);font-size:18px;text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.total .cnt{color:var(--muted);font-size:14px;font-weight:600;margin-left:6px}
+.total .big{font-family:var(--display);font-weight:800;font-size:44px;line-height:1}
+.actions{display:grid;grid-template-columns:1fr 2fr;gap:8px}
+.btn{border:0;border-radius:10px;padding:14px;font-weight:700;font-size:17px}
+.btn.primary{background:var(--pitch);color:var(--pitch-ink);font-family:var(--display);font-size:24px;letter-spacing:.04em;text-transform:uppercase}
+.btn.primary:disabled{opacity:.4;cursor:not-allowed}
+.btn.ghost{background:var(--surface2);color:var(--text)}
+.btn.danger{background:var(--danger);color:#fff}
+.btn.small{padding:8px 12px;font-size:14px}
+.btn.primary.small{font-size:18px}
+
+.toast{position:fixed;left:50%;bottom:calc(var(--sab) + 18px);transform:translateX(-50%);background:var(--text);color:var(--bg);padding:12px 16px;border-radius:12px;display:flex;gap:14px;align-items:center;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:50;max-width:calc(100% - 32px)}
+.toast button{background:transparent;border:1px solid currentColor;color:inherit;border-radius:8px;padding:6px 10px;font-weight:600}
+
+/* Panels */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:14px}
+.panel h2{margin:0;font-family:var(--display);font-size:22px;font-weight:700;text-wrap:balance}
+.panel h3{margin:0;font-family:var(--display);font-size:18px;font-weight:700}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.toolbar select{background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-weight:600;max-width:100%;min-width:0;flex:1 1 220px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.kpi{background:var(--surface2);border-radius:10px;padding:12px}
+.kpi .l{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+.kpi .v{font-family:var(--display);font-weight:800;font-size:30px;line-height:1.1}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th,td{padding:9px 8px;text-align:left;border-bottom:1px solid var(--line)}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+td.r,th.r{text-align:right}
+tfoot td{font-weight:700;border-top:2px solid var(--text);border-bottom:0}
+.dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:8px;vertical-align:middle}
+.dot.Essen{background:var(--food)} .dot.Getränke{background:var(--drink)} .dot.Sonstiges{background:var(--other)}
+.log{display:flex;flex-direction:column}
+.log .it{display:grid;grid-template-columns:52px 1fr auto auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+.log .t{color:var(--muted)}
+.x{border:1px solid var(--line);background:transparent;border-radius:8px;padding:6px 9px;font-size:13px;color:var(--danger)}
+.confirm{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.cash{display:grid;grid-template-columns:1fr auto;border:1px solid var(--line);border-radius:10px;overflow:hidden;max-width:520px}
+.cash > div{padding:10px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center}
+.cash > div:nth-child(even){justify-content:flex-end;font-weight:600}
+.cash > div:nth-last-child(-n+2){border-bottom:0}
+.cash .op{color:var(--muted);width:18px;display:inline-block}
+.cash .soll{background:var(--surface2);font-weight:700}
+.cash input{width:120px;text-align:right;background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-weight:600}
+.ok{color:var(--pitch);font-weight:600} .bad{color:var(--danger);font-weight:600}
+.pill{display:inline-block;font-family:var(--body);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:3px 8px;border-radius:999px;background:var(--food-soft);vertical-align:middle}
+.pill.live{background:var(--pitch-soft)}
+.arch .acts{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+.resetbar{border-top:1px solid var(--line);padding-top:12px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field input{background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:9px 10px;min-width:0}
+.nfrow{display:grid;grid-template-columns:2fr 1fr;gap:12px}
+.err{color:var(--danger);font-weight:600;margin:0}
+.hint{color:var(--muted);font-size:14px;margin:0;max-width:65ch}
+.status{font-size:13px;color:var(--muted)}
+.edit{display:flex;flex-direction:column;gap:8px}
+.erow{display:grid;grid-template-columns:1fr 110px 130px 40px;gap:8px;align-items:center}
+.erow input,.erow select{background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%;min-width:0}
+.erow .del{width:40px;height:40px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--danger);font-size:20px}
+
+/* ---------- Tablet / narrow ---------- */
+@media (max-width:820px){
+  .pos{grid-template-columns:1fr}
+  .erow{grid-template-columns:1fr 84px 40px}
+  .erow select{grid-column:1 / 3}
+  .nfrow{grid-template-columns:1fr}
+}
+@media (max-width:520px){
+  .grid{grid-template-columns:repeat(2,1fr)}
+  .log .it{grid-template-columns:48px 1fr auto}
+  .log .it .items{grid-column:1 / -1;order:5}
+  .brand{font-size:24px}
+  nav.tabs{flex:1 1 100%}
+  nav.tabs button{padding:8px 4px}
+  header{gap:8px 10px}
+  .brand .txt{display:none}
+  .brand{order:0}
+  .event{flex:1 1 0}
+  .event > label{display:none}
+  .evname{font-size:19px}
+  .startcash{flex:1 1 100%}
+  .startcash > label{display:inline}
+  /* Archiv als Karten */
+  .arch thead{display:none}
+  .arch tr{display:grid;grid-template-columns:1fr auto;gap:4px 12px;padding:12px 0;border-bottom:1px solid var(--line)}
+  .arch td{border:0;padding:0}
+  .arch td:nth-child(1){grid-column:1 / -1}
+  .arch td:nth-child(2)::before{content:"Datum: ";color:var(--muted)}
+  .arch td:nth-child(3){text-align:right}
+  .arch td:nth-child(3)::after{content:" Bons";color:var(--muted)}
+  .arch td:nth-child(4){text-align:left;font-weight:700}
+  .arch td:nth-child(6){grid-column:1 / -1;margin-top:6px}
+  .arch .acts{justify-content:flex-start}
+}
+
+/* ---------- Handy hochkant: Bestellung als Leiste unten ---------- */
+@media (max-width:820px) and (orientation:portrait){
+  body.on-kasse .app{padding-bottom:calc(var(--sab) + 150px)}
+  .cart{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:30;border-radius:16px 16px 0 0;border-width:1px 0 0;
+    padding:10px 16px calc(var(--sab) + 12px);box-shadow:0 -6px 20px rgba(0,0,0,.12);max-height:85vh;gap:8px}
+  .toggle{display:inline-block}
+  .cart:not(.open) .details{display:none}
+  .cart.open .details{overflow:auto}
+  .lines{max-height:none}
+  .cart-head h2{font-size:16px}
+  .total{border-top:0;padding-top:0}
+  .total .big{font-size:36px}
+  .cart-foot{flex-direction:row;align-items:center}
+  .cart-foot .total{flex:1;flex-direction:column;align-items:flex-start;gap:2px}
+  .cart-foot .actions{display:flex;flex:0 0 auto}
+  .cart-foot #clearBtn{display:none}
+  .cart.open .cart-foot #clearBtn{display:block}
+  .cart-foot #bookBtn{padding:14px 22px}
+}
+
+/* ---------- Handy quer: alles auf einen Bildschirm ---------- */
+@media (orientation:landscape) and (max-height:540px){
+  .app{gap:8px;padding-top:calc(var(--sat) + 6px);padding-bottom:calc(var(--sab) + 8px)}
+  header{flex-wrap:nowrap;gap:10px}
+  .brand .txt{display:none}
+  .event{flex:1 1 auto}
+  .event label{display:none}
+  .evname{font-size:18px}
+  #newEventBtn{padding:6px 10px;font-size:13px}
+  .startcash{flex:0 0 auto}
+  .startcash label{font-size:10px}
+  .startcash input{width:80px;padding:6px 8px}
+  nav.tabs{flex:0 0 auto}
+  nav.tabs button{padding:6px 10px;font-size:14px}
+  body.on-kasse{height:100%;overflow:hidden}
+  body.on-kasse .app{height:100%;min-height:0;max-width:none}
+  #tab-kasse{flex:1;min-height:0}
+  .pos{grid-template-columns:1fr minmax(260px,34%);height:100%;gap:10px}
+  #products{height:100%;overflow:auto;padding-bottom:8px}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px;margin-bottom:8px}
+  .prod{min-height:66px;padding:8px 10px}
+  .prod .n{font-size:19px}
+  .prod .p{font-size:13px}
+  .prod .badge{top:5px;right:5px;min-width:24px;height:24px;font-size:13px}
+  .catlabel{font-size:12px;margin:2px 0 4px}
+  .cart{position:static;height:100%;padding:10px;gap:8px;overflow:hidden}
+  .cart h2{font-size:15px}
+  .details{flex:1;overflow:auto}
+  .lines{max-height:none}
+  .line{padding:3px 0}
+  .qty button{width:30px;height:30px}
+  .given button{padding:6px 0;font-size:14px}
+  .change{font-size:14px;padding:6px 8px;margin-top:4px}
+  .change span{white-space:nowrap}
+  .total{padding-top:6px}
+  .total .big{font-size:32px}
+  .btn{padding:10px}
+  .btn.primary{font-size:20px}
+}
+
+.gate{position:fixed;inset:0;z-index:100;background:var(--bg);display:grid;place-items:center;overflow:auto;
+  padding:calc(var(--sat) + 16px) calc(var(--sar) + 16px) calc(var(--sab) + 16px) calc(var(--sal) + 16px)}
+.gatebox{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:14px}
+.gatebox .field input{font-size:17px;padding:11px 12px}
+.linkbtn{background:none;border:0;color:var(--muted);text-decoration:underline;font-size:14px;padding:4px}
+.sync{font-family:var(--body);font-size:12px;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--food-soft);color:var(--text);letter-spacing:.02em;white-space:nowrap}
+.sync.off{background:var(--danger-soft);color:var(--danger)}
+@media (prefers-reduced-motion:reduce){.prod{transition:none}}
+</style>
+</head>
+<body class="on-kasse">
+<div class="app">
+  <header>
+    <div class="brand"><span class="ball" aria-hidden="true"></span><span class="txt">Vereinskasse</span><span class="sync" id="sync" hidden></span></div>
+    <div class="event">
+      <label>Spiel</label>
+      <span class="evname" id="eventLabel">–</span>
+      <button class="btn ghost small" id="newEventBtn">Neues Spiel</button>
+    </div>
+    <div class="event startcash">
+      <label for="startCash">Anfangsbestand</label>
+      <input id="startCash" type="text" inputmode="decimal" placeholder="0,00" class="num">
+      <span class="eur">€</span>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button role="tab" data-tab="kasse" aria-selected="true">Kasse</button>
+      <button role="tab" data-tab="uebersicht" aria-selected="false">Übersicht</button>
+      <button role="tab" data-tab="archiv" aria-selected="false">Archiv</button>
+      <button role="tab" data-tab="artikel" aria-selected="false">Einstell.</button>
+    </nav>
+  </header>
+
+  <form class="panel" id="newEventForm" hidden>
+    <h2>Neues Spiel starten</h2>
+    <p class="hint">Das laufende Spiel <strong id="nfOld"></strong> wandert mit allen Buchungen ins Archiv. Artikel und Preise bleiben gleich.</p>
+    <div class="nfrow">
+      <div class="field"><label class="lbl" for="nfName">Name des Spiels</label><input id="nfName" type="text" placeholder="z. B. Heimspiel gegen SV Musterdorf"></div>
+      <div class="field"><label class="lbl" for="nfStart">Anfangsbestand (€)</label><input id="nfStart" type="text" inputmode="decimal" class="num" placeholder="0,00"></div>
+    </div>
+    <p class="err" id="nfErr" hidden></p>
+    <div class="toolbar">
+      <button type="submit" class="btn primary small">Spiel starten</button>
+      <button type="button" class="btn ghost small" id="nfCancel">Abbrechen</button>
+    </div>
+  </form>
+
+  <section id="tab-kasse">
+    <div class="pos">
+      <div id="products"></div>
+      <aside class="cart" id="cart" aria-label="Aktuelle Bestellung">
+        <div class="cart-head"><h2>Bestellung</h2><button class="toggle" id="cartToggle" aria-expanded="false">Details ▲</button></div>
+        <div class="details">
+          <div class="lines" id="lines"></div>
+          <div class="given">
+            <div class="row" id="givenRow"></div>
+            <div class="change num" id="change" hidden></div>
+          </div>
+        </div>
+        <div class="cart-foot">
+          <div class="total"><span class="tl">Summe<span class="cnt num" id="cnt"></span></span><span class="big num" id="total">0,00 €</span></div>
+          <div class="actions">
+            <button class="btn ghost" id="clearBtn">Leeren</button>
+            <button class="btn primary" id="bookBtn" disabled>Buchen</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section id="tab-uebersicht" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <h2 style="flex:1 1 auto">Abrechnung <span class="pill" id="archPill" hidden>Archiv</span></h2>
+      </div>
+      <div class="toolbar">
+        <select id="filterEvent" aria-label="Spiel auswählen"></select>
+        <button class="btn primary small" id="pdfBtn">PDF</button>
+        <button class="btn ghost small" id="csvBtn">CSV</button>
+        <button class="btn ghost small" id="copyBtn">Text kopieren</button>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><div class="l">Umsatz</div><div class="v num" id="kUmsatz">0,00 €</div></div>
+        <div class="kpi"><div class="l">Buchungen</div><div class="v num" id="kBuch">0</div></div>
+        <div class="kpi"><div class="l">Artikel verkauft</div><div class="v num" id="kStk">0</div></div>
+        <div class="kpi"><div class="l">Ø pro Bon</div><div class="v num" id="kAvg">0,00 €</div></div>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Artikel</th><th class="r">Stück</th><th class="r">Preis</th><th class="r">Umsatz</th></tr></thead>
+          <tbody id="sumBody"></tbody>
+          <tfoot><tr><td>Gesamt</td><td class="r num" id="fStk">0</td><td></td><td class="r num" id="fSum">0,00 €</td></tr></tfoot>
+        </table>
+      </div>
+      <h3>Kassenbestand</h3>
+      <div class="cash num">
+        <div><span class="op"></span>Anfangsbestand</div><div><input id="cStartIn" type="text" inputmode="decimal" aria-label="Anfangsbestand in Euro"></div>
+        <div><span class="op">+</span>Umsatz</div><div id="cUmsatz">0,00 €</div>
+        <div class="soll"><span class="op">=</span>Soll-Endbestand</div><div class="soll" id="cSoll">0,00 €</div>
+        <div><span class="op"></span>Gezählt (Ist)</div><div><input id="cIstIn" type="text" inputmode="decimal" placeholder="nach Kassensturz" aria-label="Gezählter Endbestand in Euro"></div>
+        <div><span class="op"></span>Differenz</div><div id="cDiff">–</div>
+      </div>
+      <h3>Letzte Buchungen</h3>
+      <div class="log" id="log"></div>
+      <div class="toolbar resetbar" id="resetBar"></div>
+    </div>
+  </section>
+
+  <section id="tab-archiv" hidden>
+    <div class="panel">
+      <h2>Archiv</h2>
+      <p class="hint">Alle Spiele mit ihren Buchungen. „Anzeigen“ öffnet die Abrechnung samt PDF. Löschen entfernt die Buchungen eines Spiels endgültig.</p>
+      <div class="tablewrap">
+        <table class="arch">
+          <thead><tr><th>Spiel</th><th>Datum</th><th class="r">Bons</th><th class="r">Umsatz</th><th class="r">Kasse</th><th></th></tr></thead>
+          <tbody id="archBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-artikel" hidden>
+    <div class="panel">
+      <div class="field" style="max-width:420px">
+        <label class="lbl" for="clubName">Verein (steht oben auf der PDF-Abrechnung)</label>
+        <input id="clubName" type="text" placeholder="z. B. FC Musterdorf e. V.">
+      </div>
+      <h2>Artikel &amp; Preise</h2>
+      <p class="hint">Änderungen gelten ab der nächsten Buchung. Bereits gebuchte Verkäufe behalten ihren alten Preis. Pfand-Rückgabe mit negativem Preis anlegen.</p>
+      <div class="edit" id="editList"></div>
+      <div class="toolbar">
+        <button class="btn ghost small" id="addRow">+ Artikel</button>
+        <button class="btn primary small" id="saveProducts">Speichern</button>
+        <span class="status" id="saveStatus"></span>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:14px">
+      <h2>Datensicherung</h2>
+      <p class="hint">Alle Buchungen werden online gespeichert und sind auf allen angemeldeten Geräten gleich. Eine Sicherung als Datei ist trotzdem sinnvoll, z. B. am Saisonende. „Sicherung einspielen“ übernimmt Daten aus einer Datei; doppelte Buchungen werden übersprungen.</p>
+      <div class="toolbar">
+        <button class="btn primary small" id="backupBtn">Sicherung speichern</button>
+        <button class="btn ghost small" id="restoreBtn">Sicherung einspielen</button>
+        <input type="file" id="restoreFile" accept=".json,application/json" hidden>
+      </div>
+      <p class="status" id="storageStatus"></p>
+    </div>
+    <div class="panel" style="margin-top:14px">
+      <h2>Konto</h2>
+      <p class="hint">Angemeldet als <strong id="whoami">–</strong></p>
+      <div class="toolbar"><button class="btn ghost small" id="logoutBtn">Abmelden</button></div>
+    </div>
+  </section>
+</div>
+
+<div class="gate" id="gate">
+  <form class="gatebox" id="loginForm">
+    <div class="brand"><span class="ball" aria-hidden="true"></span>Vereinskasse</div>
+    <p class="hint" id="gateMsg">Bitte mit deinem Kassen-Zugang anmelden.</p>
+    <div class="field"><label class="lbl" for="lgEmail">E-Mail</label><input id="lgEmail" type="email" autocomplete="username" required></div>
+    <div class="field"><label class="lbl" for="lgPass">Passwort</label><input id="lgPass" type="password" autocomplete="current-password" required></div>
+    <p class="err" id="lgErr" hidden></p>
+    <button class="btn primary" type="submit" id="lgBtn">Anmelden</button>
+    <button class="linkbtn" type="button" id="lgForgot">Passwort vergessen?</button>
+  </form>
+</div>
+
+<div class="toast" id="toast" hidden><span id="toastMsg"></span><button id="toastUndo">Storno</button></div>
+
+
+<script src="firebase-config.js"></script>
+<script src="firebase.bundle.js"></script>
+<script src="jspdf.umd.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

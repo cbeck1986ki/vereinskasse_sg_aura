@@ -1,0 +1,26 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Freigeschaltet ist, wer angemeldet ist UND in der Sammlung "members"
+    // ein Dokument mit seiner E-Mail-Adresse (kleingeschrieben) als ID hat.
+    function isMember() {
+      return request.auth != null
+        && request.auth.token.email != null
+        && exists(/databases/$(database)/documents/members/$(request.auth.token.email.lower()));
+    }
+
+    // Mitgliederliste: nur in der Firebase-Konsole pflegbar, nicht aus der App.
+    match /members/{email} {
+      allow read: if request.auth != null && request.auth.token.email.lower() == email;
+      allow write: if false;
+    }
+
+    match /sales/{id}  { allow read, write: if isMember(); }
+    match /cash/{id}   { allow read, write: if isMember(); }
+    match /config/{id} { allow read, write: if isMember(); }
+
+    // alles andere gesperrt
+    match /{document=**} { allow read, write: if false; }
+  }
+}
