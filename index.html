@@ -417,7 +417,7 @@ tfoot td{font-weight:700;border-top:2px solid var(--text);border-bottom:0}
 </div>
 
 <div class="gate" id="gate">
-  <form class="gatebox" id="loginForm">
+  <form class="gatebox" id="loginForm" onsubmit="return false" novalidate>
     <div class="brand"><span class="ball" aria-hidden="true"></span>Vereinskasse</div>
     <p class="hint" id="gateMsg">Bitte mit deinem Kassen-Zugang anmelden.</p>
     <div class="field"><label class="lbl" for="lgEmail">E-Mail</label><input id="lgEmail" type="email" autocomplete="username" required></div>

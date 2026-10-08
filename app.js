@@ -27,18 +27,29 @@ function salesOf(ev){
 
 /* ---------- Firebase Start ---------- */
 const cfg = window.FIREBASE_CONFIG || {};
-if(!cfg.apiKey || String(cfg.apiKey).includes("HIER_EINTRAGEN")){
-  $("gateMsg").innerHTML = "<strong>Noch nicht eingerichtet.</strong> In der Datei <code>firebase-config.js</code> fehlen die Firebase-Zugangsdaten. Siehe Anleitung (EINRICHTUNG.md).";
+function setupError(html){
+  $("gateMsg").innerHTML = html;
   $("loginForm").querySelectorAll("input,button").forEach(el=>el.disabled=true);
+}
+if(!FB){
+  setupError("<strong>Die Datei <code>firebase.bundle.js</code> fehlt oder wurde nicht geladen.</strong> Bitte prüfen, ob sie im GitHub-Repository liegt.");
+} else if(!window.FIREBASE_CONFIG){
+  setupError("<strong>Die Datei <code>firebase-config.js</code> ist fehlerhaft oder fehlt.</strong> Oft ist beim Einfügen die erste Zeile kaputtgegangen. Sie muss mit <code>window.FIREBASE_CONFIG = {</code> beginnen.");
+} else if(!cfg.apiKey || String(cfg.apiKey).includes("HIER_EINTRAGEN")){
+  setupError("<strong>Noch nicht eingerichtet.</strong> In der Datei <code>firebase-config.js</code> fehlen die Firebase-Zugangsdaten. Siehe Anleitung (EINRICHTUNG.md).");
 } else {
-  app = FB.initializeApp(cfg);
-  auth = FB.getAuth(app);
   try{
-    db = FB.initializeFirestore(app, { localCache: FB.persistentLocalCache({ tabManager: FB.persistentMultipleTabManager() }) });
+    app = FB.initializeApp(cfg);
+    auth = FB.getAuth(app);
+    try{
+      db = FB.initializeFirestore(app, { localCache: FB.persistentLocalCache({ tabManager: FB.persistentMultipleTabManager() }) });
+    }catch(e){
+      db = FB.initializeFirestore(app, {});
+    }
+    FB.onAuthStateChanged(auth, u => { user = u; u ? startSession() : endSession(); });
   }catch(e){
-    db = FB.initializeFirestore(app, {});
+    setupError("<strong>Firebase konnte nicht gestartet werden.</strong> Bitte die Werte in <code>firebase-config.js</code> prüfen.<br><small>" + esc(e && (e.code || e.message) || e) + "</small>");
   }
-  FB.onAuthStateChanged(auth, u => { user = u; u ? startSession() : endSession(); });
 }
 
 /* ---------- Login ---------- */
@@ -49,8 +60,12 @@ const authMsg = code => ({
   "auth/invalid-email":"Bitte eine gültige E-Mail-Adresse eingeben.",
   "auth/too-many-requests":"Zu viele Versuche. Bitte kurz warten.",
   "auth/network-request-failed":"Keine Internetverbindung. Für die erste Anmeldung wird Internet gebraucht.",
-  "auth/user-disabled":"Dieses Konto ist gesperrt."
-}[code] || "Anmeldung fehlgeschlagen.");
+  "auth/user-disabled":"Dieses Konto ist gesperrt.",
+  "auth/unauthorized-domain":"Diese Internetadresse ist in Firebase nicht freigegeben. In Firebase unter Authentication → Einstellungen → Autorisierte Domains „cbeck1986ki.github.io“ eintragen.",
+  "auth/operation-not-allowed":"Anmeldung per E-Mail/Passwort ist in Firebase noch nicht aktiviert (Authentication → Anmeldemethode).",
+  "auth/invalid-api-key":"Der apiKey in firebase-config.js stimmt nicht.",
+  "auth/api-key-not-valid.-please-pass-a-valid-api-key.":"Der apiKey in firebase-config.js stimmt nicht."
+}[code] || ("Anmeldung fehlgeschlagen" + (code ? " (" + code + ")." : ".")));
 $("loginForm").addEventListener("submit", async e=>{
   e.preventDefault();
   const err = $("lgErr"); err.hidden = true; $("lgBtn").disabled = true;

@@ -1,7 +1,7 @@
-// Hier die Werte aus der Firebase-Konsole eintragen:
-// Projekteinstellungen -> Allgemein -> "Meine Apps" -> Web-App -> SDK-Konfiguration ("Konfiguration").
+// Firebase-Zugangsdaten der Vereinskasse (aus: Projekteinstellungen -> Allgemein -> Meine Apps -> Web-App).
 // Diese Werte sind nicht geheim; geschützt werden die Daten durch Login + Sicherheitsregeln.
-window.Fconst firebaseConfig = {
+// Beim Ändern nur die Werte zwischen den Anführungszeichen tauschen – die Zeile "window.FIREBASE_CONFIG = {" muss bleiben.
+window.FIREBASE_CONFIG = {
   apiKey: "AIzaSyB0sUjmfUHl-iUuxArYeCI1-BRjHiBdfOY",
   authDomain: "vereinskasse-sg-aura.firebaseapp.com",
   projectId: "vereinskasse-sg-aura",
